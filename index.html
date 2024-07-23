@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Life Visualized</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #f9fafb;
+            --completed-color: #a5ffbd;
+            --remaining-color: #f87171;
+            --background-color: #f3f4f6;
+            --text-color: #111827;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 4px;
+            max-width: calc(12 * 40px + 11 * 4px);
+            margin: 0 auto;
+        }
+
+        .cell {
+            width: 4em;
+            height: 4em;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease-in-out;
+            border: 1px solid #e0e0e0;
+            position: relative;
+        }
+
+        .cell:hover {
+            transform: scale(1.5);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .completed {
+            background-color: var(--completed-color);
+        }
+
+        .uncompleted {
+            background-color: var(--background-color);
+        }
+
+        .note-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: #ff6347;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            right: 2px;
+        }
+
+        .stat-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .battery {
+            width: 100px;
+            height: 30px;
+            border: 2px solid var(--primary-color);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .battery-fill {
+            height: 100%;
+            background-color: var(--completed-color);
+            transition: width 0.3s ease;
+        }
+
+        .vertical-bar {
+            width: 2em;
+            height: 5em;
+            background-color: var(--background-color);
+            border: 2px solid var(--primary-color);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .vertical-bar-fill {
+            width: 100%;
+            background-color: var(--remaining-color);
+            position: absolute;
+            bottom: 0;
+            transition: height 0.3s ease;
+        }
+
+        .circular-progress {
+            width: 80px;
+            height: 80px;
+            position: relative;
+        }
+
+        .circular-progress svg {
+            transform: rotate(-90deg);
+        }
+
+        .circular-progress circle {
+            fill: none;
+            stroke-width: 5;
+        }
+
+        .progress-background {
+            stroke: var(--background-color);
+        }
+
+        .progress-bar {
+            stroke: var(--remaining-color);
+            transition: stroke-dashoffset 0.3s ease;
+        }
+
+        .note-card {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .note-card h2 {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .note-card ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .note-card li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .note-card textarea {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .note-card button {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .note-card .add-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .note-card .save-btn {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .note-card .delete-icon {
+            color: #ef4444;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col items-center min-h-screen p-4">
+    <header class="w-full bg-white p-4 shadow-md mb-8">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800">Your Life Visualized</h1>
+            <div class="flex items-center space-x-4">
+                <label for="dobInput" class="text-gray-600">Date of Birth:</label>
+                <input type="date" id="dobInput" class="p-2 border rounded focus:ring-2 focus:ring-indigo-300">
+                <button onclick="generateGrid()"
+                    class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 transition">Update</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="stat-container">
+                <p class="stat-title">Life Progress</p>
+                <div class="battery mb-2">
+                    <div id="life-completed-fill" class="battery-fill"></div>
+                </div>
+                <p class="stat-value"><span id="percentage-completed"></span>% completed</p>
+                <p class="stat-subtitle">You've lived <span id="years-lived"></span> years</p>
+            </div>
+            <div class="stat-container">
+                <p class="stat-title">Time Remaining</p>
+                <div class="flex justify-between items-center w-full">
+                    <div class="text-center">
+                        <p class="stat-value"><span id="remaining-years"></span></p>
+                        <p class="stat-subtitle">Years</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="stat-value"><span id="remaining-months"></span></p>
+                        <p class="stat-subtitle">Months</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="stat-value"><span id="remaining-days"></span></p>
+                        <p class="stat-subtitle">Days</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex">
+            <div id="yearLabels" class="flex flex-col justify-between text-xl text-gray-800 mr-4"></div>
+            <div id="gridContainer" class="grid-container justify-center"></div>
+        </div>
+    </main>
+
+
+    <script>
+        document.getElementById('dobInput').value = '1990-01-01';
+        let notes = {};
+
+        function generateGrid() {
+            const dobInput = document.getElementById('dobInput').value;
+            if (!dobInput) {
+                alert("Please enter your date of birth.");
+                return;
+            }
+
+            const dob = new Date(dobInput);
+            const startYear = dob.getFullYear();
+            const startMonth = dob.getMonth();
+            const now = new Date();
+            const gridContainer = document.getElementById('gridContainer');
+            const yearLabelsContainer = document.getElementById('yearLabels');
+            gridContainer.innerHTML = '';
+            yearLabelsContainer.innerHTML = '';
+
+            const monthsInYear = 12;
+            const totalYears = 75;
+            const totalMonths = totalYears * monthsInYear;
+            const currentMonth = (now.getFullYear() - dob.getFullYear()) * 12 + (now.getMonth() - dob.getMonth());
+            const yearsLived = Math.floor(currentMonth / 12);
+            const remainingYears = totalYears - yearsLived;
+            const remainingMonths = totalMonths - currentMonth;
+            const remainingDays = Math.floor((dob.setFullYear(dob.getFullYear() + totalYears) - now) / (1000 * 60 * 60 * 24));
+
+            const percentageCompleted = (currentMonth / totalMonths) * 100;
+
+            // Update stats
+            document.getElementById('percentage-completed').textContent = percentageCompleted.toFixed(1);
+            document.getElementById('years-lived').textContent = yearsLived;
+            document.getElementById('remaining-years').textContent = remainingYears;
+            document.getElementById('remaining-months').textContent = remainingMonths;
+            document.getElementById('remaining-days').textContent = remainingDays;
+
+            document.getElementById('life-completed-fill').style.width = `${percentageCompleted}%`;
+
+            const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            for (let i = 0; i < totalMonths; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.classList.add(i < currentMonth ? 'completed' : 'uncompleted');
+                cell.dataset.month = i;
+
+                const monthDate = new Date(dobInput);
+                monthDate.setMonth(monthDate.getMonth() + i);
+                const monthDateString = monthDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+                cell.title = monthDateString;
+                cell.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    showNoteCard(i, monthDateString, monthDate.getFullYear());
+                });
+
+                if (notes[i]) {
+                    const noteIndicator = document.createElement('div');
+                    noteIndicator.classList.add('note-indicator');
+                    cell.appendChild(noteIndicator);
+                }
+
+                // add month short name to cell
+                const monthLabel = document.createElement('div');
+                monthLabel.classList.add('text-xs', 'text-gray-800');
+                monthLabel.classList.add('absolute', 'top-1/2', 'left-1/2', 'transform', '-translate-x-1/2', '-translate-y-1/2', 'opacity-10');
+                monthLabel.textContent = monthLabels[monthDate.getMonth() % 12].toUpperCase();
+                cell.appendChild(monthLabel);
+
+                gridContainer.appendChild(cell);
+            }
+
+            for (let i = 0; i < totalYears; i++) {
+                const yearLabel = document.createElement('div');
+                yearLabel.classList.add('year-label');
+                yearLabel.textContent = startYear + i;
+                if (i % 5 === 0 || i === 0) {
+                    yearLabelsContainer.appendChild(yearLabel);
+                } else {
+                    const emptyLabel = document.createElement('div');
+                    emptyLabel.classList.add('year-label');
+                    yearLabelsContainer.appendChild(emptyLabel);
+                }
+            }
+
+            document.body.addEventListener('click', removeNoteCard);
+        }
+
+        function showNoteCard(month, monthDateString, year) {
+            console.log("in showNote", month, monthDateString, year);
+            const existingCard = document.querySelector('.note-card');
+            if (existingCard) existingCard.remove();
+
+            const noteCard = document.createElement('div');
+            noteCard.classList.add('note-card');
+            noteCard.innerHTML = `
+                <h2>${monthDateString}</h2>
+                <ul id="notesList">
+                    ${(notes[month] || []).map((note, index) => `
+                    <li>
+                        ${note}
+                        <i class="fas fa-trash-alt delete-icon" onclick="deleteSingleNote(${month}, ${index}, '${monthDateString}', ${year})"></i>
+                    </li>
+                    `).join('')}
+                </ul>
+                <textarea id="newNoteText" rows="2" placeholder="Add a note..."></textarea>
+                <div class="flex justify-between">
+                    <button class="add-btn">Add</button>
+                </div>
+            `;
+
+            noteCard.querySelector('.add-btn').addEventListener('click', () => addNote(month, monthDateString, year));
+
+            document.body.appendChild(noteCard);
+
+            noteCard.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+        }
+
+        function addNote(month, monthDateString, year) {
+            const newNoteText = document.getElementById('newNoteText').value;
+            if (newNoteText.trim()) {
+                if (!notes[month]) {
+                    notes[month] = [];
+                }
+                notes[month].push(newNoteText.trim());
+                console.log("in addNote", month, monthDateString, year);
+                showNoteCard(month, monthDateString, year);
+            }
+            generateGrid();
+        }
+
+        function saveNotes(month) {
+            generateGrid();
+            removeNoteCard();
+        }
+
+        function deleteSingleNote(month, noteIndex, monthDateString, year) {
+            notes[month].splice(noteIndex, 1);
+            if (notes[month].length === 0) {
+                delete notes[month];
+                generateGrid()
+            }
+            console.log("in deleteSingleNote", month, monthDateString, year);
+            showNoteCard(month, monthDateString, year);
+        }
+
+        function removeNoteCard() {
+            const noteCard = document.querySelector('.note-card');
+            if (noteCard) {
+                noteCard.remove();
+            }
+        }
+
+        document.body.addEventListener('click', (event) => {
+            if (!event.target.closest('.note-card')) {
+                removeNoteCard();
+            }
+        });
+
+        generateGrid();
+    </script>
+</body>
+
+</html>
