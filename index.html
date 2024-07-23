@@ -206,7 +206,7 @@
 </head>
 
 <body class="flex flex-col items-center min-h-screen p-4">
-    <header class="w-full bg-white p-4 shadow-md mb-8">
+    <header class="w-full bg-white p-4 shadow-md mb-8 sm:flex-row justify-between items-center">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold text-gray-800">Your Life Visualized</h1>
             <div class="flex items-center space-x-4">
@@ -220,7 +220,7 @@
 
     <main class="container mx-auto">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="stat-container">
+            <div class="stat-container sm:w-full">
                 <p class="stat-title">Life Progress</p>
                 <div class="battery mb-2">
                     <div id="life-completed-fill" class="battery-fill"></div>
@@ -228,7 +228,7 @@
                 <p class="stat-value"><span id="percentage-completed"></span>% completed</p>
                 <p class="stat-subtitle">You've lived <span id="years-lived"></span> years</p>
             </div>
-            <div class="stat-container">
+            <div class="stat-container sm:w-full">
                 <p class="stat-title">Time Remaining</p>
                 <div class="flex justify-between items-center w-full">
                     <div class="text-center">
@@ -246,8 +246,8 @@
                 </div>
             </div>
         </div>
-        <div class="flex">
-            <div id="yearLabels" class="flex flex-col justify-between text-xl text-gray-800 mr-4"></div>
+        <div class="flex flex-col sm:flex-row">
+            <div id="yearLabels" class="hidden sm:flex flex-col justify-between text-xl text-gray-800 mr-4"></div>
             <div id="gridContainer" class="grid-container justify-center"></div>
         </div>
     </main>
